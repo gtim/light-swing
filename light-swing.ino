@@ -1,5 +1,10 @@
+#include "SPI.h" // for FastLED
+#include <Wire.h> // for MPU6050
 #include <FastLED.h>
-#include "SPI.h"
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+
+Adafruit_MPU6050 mpu;
 
 const uint8_t Num_LEDs = 5;
 const uint8_t LED_Data_Pin = 5;
@@ -17,11 +22,40 @@ void setup() {
     leds[i] = CRGB::Black;
   FastLED.show();
 
+  // MPU set-up
+
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+
+  delay(100);
 }
 
 unsigned long loop_length_ms = 1e3;
 
 void loop() {
+
+  // MPU
+
+  // Get new readings
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  // Print acceleration
+  Serial.print("Acc ");
+  Serial.print(a.acceleration.x);
+  Serial.print(", ");
+  Serial.print(a.acceleration.y);
+  Serial.print(", ");
+  Serial.print(a.acceleration.z);
+  Serial.println(" m/s^2");
+  
 
   // LEDs loop through cyan to magenta
 
@@ -33,4 +67,6 @@ void loop() {
   }
   FastLED.show();
 
+
+  delay(30);
 }
