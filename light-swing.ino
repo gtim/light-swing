@@ -38,32 +38,20 @@ void setup() {
   delay(100);
 }
 
-unsigned long loop_length_ms = 1e3;
-
 void loop() {
 
-  // MPU
-
-  // Get new readings
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
-  // Print acceleration
-  Serial.print("Acc ");
-  Serial.print(a.acceleration.x);
-  Serial.print(", ");
-  Serial.print(a.acceleration.y);
-  Serial.print(", ");
-  Serial.print(a.acceleration.z);
-  Serial.println(" m/s^2");
+  // Read accelerometer
   
-
-  // LEDs loop through cyan to magenta
-
-  unsigned long ms = millis();
+  sensors_event_t a, g, temp; // acceleration, gyro, temperature
+  mpu.getEvent(&a, &g, &temp);
+  
+  // Set LED color from accelerometer.
+  // Map z-direction acceleration 0..10 m/s^2 to cyan..magenta
+  
+  uint8_t hue = map( (long)(a.acceleration.z*100), 0, 1000, 116, 224 ); // 116 -> 224 : cyan -> magenta
+  hue = constrain( hue, 116, 224 );
   for ( uint8_t i = 0; i < Num_LEDs; i++ ) {
-    uint8_t hue = map( ms % loop_length_ms, 0, loop_length_ms-1, 116, 224 ); // 116 -> 124 : cyan -> magenta
     leds[i] = CHSV(hue,255,255);
-    ms += loop_length_ms/10;
   }
   FastLED.show();
 
