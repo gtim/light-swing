@@ -44,7 +44,7 @@ void loop() {
   sensors_event_t a, g, temp; // acceleration, gyro, temperature
   mpu.getEvent(&a, &g, &temp);
 
-  // Output in CSV format "time,acc_x,acc_y,acc_z"
+  // Output in CSV format "time,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z"
 
   Serial.print(millis()); // ms
   Serial.print(",");
@@ -53,6 +53,12 @@ void loop() {
   Serial.print(a.acceleration.y);
   Serial.print(",");
   Serial.print(a.acceleration.z);
+  Serial.print(",");
+  Serial.print(g.gyro.x); // rad/s
+  Serial.print(",");
+  Serial.print(g.gyro.y);
+  Serial.print(",");
+  Serial.print(g.gyro.z);
   Serial.println("");
   
   delay(30);
