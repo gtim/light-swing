@@ -55,3 +55,14 @@ title( ['Acceleration and ang.vel, ' csv_filename ] );
 ylabel( h_plotyy(1), 'acceleration / ms^{-2}' );
 ylabel( h_plotyy(2), 'angular velocity / rads^{-1}' );
 legend( 'Acceleration', 'Angular velocity' );
+
+%% Plot centripetal and tangential acceleration
+
+figure(4);
+acc_centripetal = acc(:,3);
+acc_tangential = sqrt( acc(:,1).^2 + acc(:,2).^2 );
+plot( t*1e-3, [ acc_centripetal, acc_tangential] )
+title( [ 'Acc. centripetal and tangential, ' csv_filename  ] );
+xlabel( 'time / s' );
+ylabel( 'acceleration / ms^{-2}' );
+legend('centripetal acceleration', 'tangential acceleration');
