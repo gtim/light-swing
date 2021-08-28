@@ -99,7 +99,7 @@ char bufferTxSer[100];
 void setup() {
     /* serial to display data */
     Serial.begin(115200);
-    while(!Serial) {}
+    delay(100);
 
     /* Bluetooth */
 
