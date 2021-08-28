@@ -17,7 +17,7 @@
 #define SS_X_LEN    (2)
 #define SS_Z_LEN    (2)
 #define SS_U_LEN    (0)
-#define SS_DT_MILIS (20)                            /* 20 ms */
+#define SS_DT_MILIS (10)                            /* 10 ms */
 #define SS_DT       float_prec(SS_DT_MILIS/1000.)   /* Sampling time */
 
 
@@ -30,7 +30,7 @@
 /* Set this define to choose math precision of the system */
 #define PRECISION_SINGLE    1
 #define PRECISION_DOUBLE    2
-#define FPU_PRECISION       (PRECISION_SINGLE)
+#define FPU_PRECISION       (PRECISION_DOUBLE)
 
 #if (FPU_PRECISION == PRECISION_SINGLE)
     #define float_prec          float
