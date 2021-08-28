@@ -19,15 +19,32 @@
  *      x2(k+1) = x2(k) - g/l*sin(x1(k))*dt
  * 
  ************************************************************************************************************/
+// EKF includes
 #include <Wire.h>
 #include <elapsedMillis.h>
 #include "konfig.h"
 #include "matrix.h"
 #include "ekf.h"
+
+// MPU includes
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 
+// Bluetooth includes
+#include <SoftwareSerial.h>  
+
+
+// MPU
+
 Adafruit_MPU6050 mpu;
+
+
+// Bluetooth
+
+int bluetoothTx = 0;
+int bluetoothRx = 1;
+SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
+
 
 /* =============================================== The pendulum model constants =============================================== */
 #define pend_g      (9.81)          /* gravitation constant */
@@ -84,6 +101,10 @@ void setup() {
     Serial.begin(115200);
     while(!Serial) {}
 
+    /* Bluetooth */
+
+    bluetooth.begin(115200);  // BlueSMiRF defaults to 115200bps
+
     /* MÅU */
 
     if (!mpu.begin()) {
@@ -112,7 +133,6 @@ void setup() {
 void loop() {
     if (timerEKF >= SS_DT_MILIS) {
         timerEKF = 0;
-        
         
         /* ================== Read the sensor data / simulate the system here ================== */
 
@@ -143,8 +163,9 @@ void loop() {
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f",
                                                      EKF_IMU.GetX()[0][0] *18/3.141592, EKF_IMU.GetX()[1][0], 
                                                      Y[0][0], Y[1][0] );
-        Serial.print(bufferTxSer);
-        Serial.print('\n');
+        bluetooth.print(bufferTxSer);
+        bluetooth.print('\n');
+
         /* --------------------------- Print to serial (for plotting) -------------------------- */
     }
 }
