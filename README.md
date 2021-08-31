@@ -7,9 +7,10 @@ This project is ongoing. I'm writing a "dev diary" at
 
 ## Hardware (TODO)
 
-* Arduino Uno
+* Teensy 3.6
 * MPU-9150 inertial measurement unit
 * WS2812 addressable RGB LEDs
+* BlueSMiRF RN-42 Bluetooth modem
 
 ## Software (TODO)
 
