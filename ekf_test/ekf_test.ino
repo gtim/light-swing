@@ -265,7 +265,7 @@ bool Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
     float_prec theta_dot = X[1][0];
 
     H[0][0] = 0;
-    H[0][1] = 2 * pend_l * theta_dot * SS_DT;
+    H[0][1] = 2 * pend_l * theta_dot;
     
     H[1][0] = 0;
     H[1][1] = 0;
