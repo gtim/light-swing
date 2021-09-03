@@ -48,7 +48,7 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
 /* =============================================== The pendulum model constants =============================================== */
 #define pend_g      (9.81)          /* gravitation constant */
-#define pend_l      (0.65)             /* length of the pendulum rod, in meters */
+#define pend_l      (2.15)             /* length of the pendulum rod, in meters */
 
 
 
@@ -60,7 +60,7 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
  */
 /* EKF initialization constant -------------------------------------------------------------------------------------- */
 #define P_INIT      (100.)
-#define Q_INIT      (0.01)
+#define Q_INIT      (0.1)
 #define R_INIT      (1.)
 /* P(k=0) variable -------------------------------------------------------------------------------------------------- */
 float_prec EKF_PINIT_data[SS_X_LEN*SS_X_LEN] = {P_INIT, 0,
@@ -139,10 +139,10 @@ void loop() {
         sensors_event_t a, g, temp; // acceleration, gyro, temperature
         mpu.getEvent(&a, &g, &temp);
 
-        // tangential acceleration
-        Y[0][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y ); 
-        // radial acceleration
-        Y[1][0] = a.acceleration.z;
+        // acceleration magnitude squared
+        Y[0][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
+        // second measurement placeholder TODO
+        Y[1][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z );
         
         /* ------------------ Read the sensor data / simulate the system here ------------------ */
         
@@ -159,10 +159,10 @@ void loop() {
         
         
         /* =========================== Print to serial (for plotting) ========================== */
-        /* Print: x1 est, x2 est, y1, y2 */
+        /* Print: x1 est, x2 est, y1 */
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f",
-                                                     EKF_IMU.GetX()[0][0] *18/3.141592, EKF_IMU.GetX()[1][0], 
-                                                     Y[0][0], Y[1][0] );
+                                                     EKF_IMU.GetX()[0][0] *180/3.141592, EKF_IMU.GetX()[1][0], 
+                                                     Y[0][0] );
         bluetooth.print(bufferTxSer);
         bluetooth.print('\n');
 
@@ -202,14 +202,14 @@ bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U)
      *          y(k)   = h[x(k), u(k)]
      *
      *  The output (in discrete time):
-     *      y1(k) =  acc_tang
-     *      y2(k) =  acc_rad
+     *      y1(k) =  acceleration magnitude = g + l * theta_dot**2 // small-angle approximation
+     *      y2(k) =  TODO
      */
     float_prec theta     = X[0][0];
     float_prec theta_dot = X[1][0];
     
-    Y[0][0] =  -pend_g * sin(theta);
-    Y[1][0] = pend_l * theta_dot*theta_dot + pend_g * cos(theta);
+    Y[0][0] = pend_g + pend_l * theta_dot*theta_dot;
+    Y[1][0] = 0;
     
     return true;
 }
@@ -246,8 +246,8 @@ bool Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U)
 bool Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
 {
     /*  The output (in discrete time):
-     *      y1(k) = h1(x) = acc_tang = l * theta_dotdot = -pend_g * sin(theta);
-     *      y2(k) = h2(x) = acc_rad = l * theta_dot^2 + g*cos(theta)
+     *      y1(k) = h1(x) = acceleration magnitude = g + l * theta_dot**2 // small-angle approximation
+     *      y2(k) = h2(x) = TODO
      * 
      * 
      *  The Jacobian matrix is 2x2 matrix (because we have 2 outputs):
@@ -264,11 +264,11 @@ bool Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
     float_prec theta     = X[0][0];
     float_prec theta_dot = X[1][0];
 
-    H[0][0] = -pend_g * cos(theta);
-    H[0][1] = 0;
+    H[0][0] = 0;
+    H[0][1] = 2 * pend_l * theta_dot * SS_DT;
     
-    H[1][0] = - pend_g * sin(theta);
-    H[1][1] = pend_l * 2 * theta_dot;
+    H[1][0] = 0;
+    H[1][1] = 0;
     
     return true;
 }
