@@ -160,7 +160,7 @@ void loop() {
         
         /* =========================== Print to serial (for plotting) ========================== */
         /* Print: x1 est, x2 est, y1 */
-        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f",
+        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f",
                                                      EKF_IMU.GetX()[0][0] *180/3.141592, EKF_IMU.GetX()[1][0], 
                                                      Y[0][0] );
         bluetooth.print(bufferTxSer);
