@@ -47,7 +47,7 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
 
 /* =============================================== The pendulum model constants =============================================== */
-#define pend_g      (9.81)          /* gravitation constant */
+#define pend_g      (10.1)             /* acceleration measured at rest (ms^-2) */
 #define pend_l      (2.15)             /* length of the pendulum rod, in meters */
 
 
