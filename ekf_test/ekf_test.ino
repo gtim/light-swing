@@ -47,7 +47,7 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
 
 /* =============================================== The pendulum model constants =============================================== */
-#define pend_g      (10.1)             /* acceleration measured at rest (ms^-2) */
+#define pend_g      (10.05)             /* acceleration measured at rest (ms^-2) */
 #define pend_l      (2.15)             /* length of the pendulum rod, in meters */
 
 
@@ -60,8 +60,8 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
  */
 /* EKF initialization constant -------------------------------------------------------------------------------------- */
 #define P_INIT      (100.)
-#define Q_INIT      (0.1)
-#define R_INIT      (1.)
+#define Q_INIT      (0.01)
+#define R_INIT      (0.1)
 /* P(k=0) variable -------------------------------------------------------------------------------------------------- */
 float_prec EKF_PINIT_data[SS_X_LEN*SS_X_LEN] = {P_INIT, 0,
                                                 0,      P_INIT};
@@ -141,8 +141,8 @@ void loop() {
 
         // acceleration magnitude squared
         Y[0][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
-        // second measurement placeholder TODO
-        Y[1][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z );
+        // gyro x/y magnitude squared (not including z = twist)
+        Y[1][0] = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
         
         /* ------------------ Read the sensor data / simulate the system here ------------------ */
         
@@ -158,11 +158,18 @@ void loop() {
         /* ----------------------------- Update the Kalman Filter ------------------------------ */
         
         
-        /* =========================== Print to serial (for plotting) ========================== */
-        /* Print: x1 est, x2 est, y1 */
+        /* =========================== Print diagnostics to bluetooth for live plotting ========================== */
+        /* x1 est, x2 est, y1 */
+        /*
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f",
                                                      EKF_IMU.GetX()[0][0] *180/3.141592, EKF_IMU.GetX()[1][0], 
                                                      Y[0][0] );
+        bluetooth.print(bufferTxSer);
+        bluetooth.print('\n');
+        */
+
+        /* =========================== Log measurements to bluetooth for test case data ========================== */
+        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", EKF_IMU.GetY()[0][0], EKF_IMU.GetY()[1][0] );
         bluetooth.print(bufferTxSer);
         bluetooth.print('\n');
 
