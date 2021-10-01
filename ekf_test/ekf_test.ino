@@ -134,17 +134,20 @@ void loop() {
     if (timerEKF >= SS_DT_MILIS) {
         timerEKF = 0;
         
-        /* ================== Read the sensor data / simulate the system here ================== */
+        /* ================== Read sensor data ================== */
 
         sensors_event_t a, g, temp; // acceleration, gyro, temperature
         mpu.getEvent(&a, &g, &temp);
 
-        // acceleration magnitude squared
+        // acceleration magnitude 
         Y[0][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
-        // gyro x/y magnitude squared (not including z = twist)
+        // gyro x/y magnitude (not including z = twist)
         Y[1][0] = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
         
-        /* ------------------ Read the sensor data / simulate the system here ------------------ */
+        /* =========================== Log measurements to bluetooth for test case data ========================== */
+        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", Y[0][0], Y[1][0] );
+        bluetooth.print(bufferTxSer);
+        bluetooth.print('\n');
         
         
         /* ============================= Update the Kalman Filter ============================== */
@@ -168,12 +171,6 @@ void loop() {
         bluetooth.print('\n');
         */
 
-        /* =========================== Log measurements to bluetooth for test case data ========================== */
-        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", EKF_IMU.GetY()[0][0], EKF_IMU.GetY()[1][0] );
-        bluetooth.print(bufferTxSer);
-        bluetooth.print('\n');
-
-        /* --------------------------- Print to serial (for plotting) -------------------------- */
     }
 }
 
