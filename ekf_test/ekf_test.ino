@@ -31,7 +31,11 @@
 #include <Adafruit_Sensor.h>
 
 // Bluetooth includes
-#include <SoftwareSerial.h>  
+#include <SoftwareSerial.h>
+
+// Test-case data
+#include "mock_sensor_data.h"
+#define USE_MOCK_SENSOR_DATA
 
 
 // MPU
@@ -136,18 +140,33 @@ void loop() {
         
         /* ================== Read sensor data ================== */
 
-        sensors_event_t a, g, temp; // acceleration, gyro, temperature
-        mpu.getEvent(&a, &g, &temp);
+        #ifndef USE_MOCK_SENSOR_DATA
 
-        // acceleration magnitude 
-        Y[0][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
-        // gyro x/y magnitude (not including z = twist)
-        Y[1][0] = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
+          // Use live sensor data
+          
+          sensors_event_t a, g, temp; // acceleration, gyro, temperature
+          mpu.getEvent(&a, &g, &temp);
+  
+          // acceleration magnitude 
+          Y[0][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
+          // gyro x/y magnitude (not including z = twist)
+          Y[1][0] = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
+
+        #else
+
+          // Use pre-recorded mock data
+
+          Y[0][0] = mock_sensor_data[mock_sensor_data_row_i][0];
+          Y[1][0] = mock_sensor_data[mock_sensor_data_row_i][1];
+          mock_sensor_data_row_i = ( mock_sensor_data_row_i + 1 ) % MOCK_SENSOR_DATA_NUM_ROWS;
+          
+        #endif
+
         
         /* =========================== Log measurements to bluetooth for test case data ========================== */
-        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", Y[0][0], Y[1][0] );
-        bluetooth.print(bufferTxSer);
-        bluetooth.print('\n');
+        //snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", Y[0][0], Y[1][0] );
+        //bluetooth.print(bufferTxSer);
+        //bluetooth.print('\n');
         
         
         /* ============================= Update the Kalman Filter ============================== */
@@ -161,15 +180,13 @@ void loop() {
         /* ----------------------------- Update the Kalman Filter ------------------------------ */
         
         
-        /* =========================== Print diagnostics to bluetooth for live plotting ========================== */
+        /* =========================== Print diagnostics to bluetooth/serial for live plotting ========================== */
         /* x1 est, x2 est, y1 */
-        /*
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f",
                                                      EKF_IMU.GetX()[0][0] *180/3.141592, EKF_IMU.GetX()[1][0], 
                                                      Y[0][0] );
-        bluetooth.print(bufferTxSer);
-        bluetooth.print('\n');
-        */
+        Serial.print(bufferTxSer);
+        Serial.print('\n');
 
     }
 }
