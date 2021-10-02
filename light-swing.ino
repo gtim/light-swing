@@ -52,14 +52,19 @@ const uint8_t Num_LEDs = 5;
 const uint8_t LED_Data_Pin = 5;
 CRGB leds[Num_LEDs];
 
-// Physical constants
-#define pend_g      (10.05)  // acceleration measured at rest (ms^-2)
-#define pend_l      (2.0)    // length of swing (m)
-
+// Lightshow state variables
+bool angvel_positive = true; // track to find for zero-crossing = swing turns
+uint32_t last_swingturn_ms = 0; // millis() of last swing turn = angvel zero-crossing
+uint32_t last_swingturn_posneg_ms = 0; // angvel pos->neg (arbitrarily left/right)
+uint32_t last_swingturn_negpos_ms = 0;
 
 /* 
  *  EKF variables/declarations
  */
+
+// Physical constants
+#define pend_g      (10.05)  // acceleration measured at rest (ms^-2)
+#define pend_l      (2.0)    // length of swing (m)
 
 // EKF covariance matrices
 
@@ -185,19 +190,33 @@ void loop() {
             EKF_IMU.vReset(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT);
             Serial.println("Whoop ");
         }
-        
+
+        // Update lightshow state
+
+        // Angular velocity crosses zero = swing turns at end of arc
+        float_prec angvel_est = EKF_IMU.GetX()[1][0];
+        if (          angvel_positive && angvel_est < 0 ) {
+          last_swingturn_ms = millis();
+          last_swingturn_posneg_ms = last_swingturn_ms;
+          angvel_positive = false;
+        } else if ( ! angvel_positive && angvel_est > 0 ) {
+          last_swingturn_ms = millis();
+          last_swingturn_negpos_ms = last_swingturn_ms;
+          angvel_positive = true;
+        }
         
         // Print state to bluetooth/serial for live plotting
         
-        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f",
+        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f %lu",
                                                      EKF_IMU.GetX()[0][0] *180/3.1415, // x1 = estimated angle (deg)
                                                      EKF_IMU.GetX()[1][0] *180/3.1415, // x2 = estimated angular velocity (deg/s)
                                                      Y[0][0],   // y1 = measured acceleration magnitude
-                                                     Y[1][0]*50 // y2 = measured gyro x/y magnitude (times 50)
+                                                     Y[1][0]*50, // y2 = measured gyro x/y magnitude (times 50)
+                                                     (millis()-last_swingturn_ms)/10 // time since last swing turn (ms/10)
         );
         Serial.print(bufferTxSer);
         Serial.print('\n');
-
+        
     }
 }
 
