@@ -83,7 +83,6 @@ EKF EKF_IMU(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT,
             Main_bUpdateNonlinearX, Main_bUpdateNonlinearY, Main_bCalcJacobianF, Main_bCalcJacobianH);
 // EKF auxiliary variables
 elapsedMillis timerLed, timerEKF;
-uint64_t u64compuTime;
 char bufferTxSer[100];
 
 
@@ -161,13 +160,11 @@ void loop() {
         
         // Update Kalman filter
         
-        u64compuTime = micros();
         if (!EKF_IMU.bUpdate(Y, U)) {
             X_est_init.vSetToZero();
             EKF_IMU.vReset(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT);
             Serial.println("Whoop ");
         }
-        u64compuTime = (micros() - u64compuTime);
         
         
         // Print state to bluetooth/serial for live plotting
