@@ -52,7 +52,7 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
 /* =============================================== The pendulum model constants =============================================== */
 #define pend_g      (10.05)             /* acceleration measured at rest (ms^-2) */
-#define pend_l      (2.15)             /* length of the pendulum rod, in meters */
+#define pend_l      (2.0)             /* length of the pendulum rod, in meters */
 
 
 
@@ -63,9 +63,9 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
  *  SS_U_LEN = 0 
  */
 /* EKF initialization constant -------------------------------------------------------------------------------------- */
-#define P_INIT      (100.)
-#define Q_INIT      (0.01)
-#define R_INIT      (0.1)
+#define P_INIT      (10.)
+#define Q_INIT      (0.001)
+#define R_INIT      (1)
 /* P(k=0) variable -------------------------------------------------------------------------------------------------- */
 float_prec EKF_PINIT_data[SS_X_LEN*SS_X_LEN] = {P_INIT, 0,
                                                 0,      P_INIT};
@@ -185,8 +185,8 @@ void loop() {
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f",
                                                      EKF_IMU.GetX()[0][0] *180/3.141592, EKF_IMU.GetX()[1][0], 
                                                      Y[0][0] );
-        Serial.print(bufferTxSer);
-        Serial.print('\n');
+        bluetooth.print(bufferTxSer);
+        bluetooth.print('\n');
 
     }
 }
