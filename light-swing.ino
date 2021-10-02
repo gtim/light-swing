@@ -35,7 +35,7 @@
 
 // Pre-recorded sensor data for testing
 #include "mock_sensor_data.h"
-#define USE_MOCK_SENSOR_DATA
+//#define USE_MOCK_SENSOR_DATA
 
 
 
@@ -49,7 +49,7 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
 // FastLED
 const uint8_t Num_LEDs = 5;
-const uint8_t LED_Data_Pin = 5;
+const uint8_t LED_Data_Pin = 7;
 CRGB leds[Num_LEDs];
 
 // Lightshow state variables
@@ -204,6 +204,24 @@ void loop() {
           last_swingturn_negpos_ms = last_swingturn_ms;
           angvel_positive = true;
         }
+
+        // Update LEDs
+
+        uint32_t cur_millis = millis();
+        if ( cur_millis - last_swingturn_ms < 1000 ) {
+          //uint8_t hsv_hue   = map( cur_millis - last_swingturn_ms, 0, 1000, 224, 128 );
+          //hsv_hue   = constrain( hsv_hue, 128, 224 );
+          uint8_t hsv_hue = ( last_swingturn_negpos_ms > last_swingturn_posneg_ms ? 224 : 128 );
+          uint8_t hsv_value = map( cur_millis - last_swingturn_ms, 0, 1000, 255, 0 );
+          for ( uint8_t i = 0; i < Num_LEDs; i++ ) {
+            leds[i] = CHSV(hsv_hue,255,hsv_value);
+          }
+        } else {
+          for ( uint8_t i = 0; i < Num_LEDs; i++ ) {
+            leds[i] = CRGB::Black;
+          }
+        }
+        FastLED.show();
         
         // Print state to bluetooth/serial for live plotting
         
