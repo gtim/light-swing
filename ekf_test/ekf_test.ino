@@ -181,12 +181,14 @@ void loop() {
         
         
         /* =========================== Print diagnostics to bluetooth/serial for live plotting ========================== */
-        /* x1 est, x2 est, y1 */
-        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f",
-                                                     EKF_IMU.GetX()[0][0] *180/3.141592, EKF_IMU.GetX()[1][0], 
-                                                     Y[0][0] );
-        bluetooth.print(bufferTxSer);
-        bluetooth.print('\n');
+        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f",
+                                                     EKF_IMU.GetX()[0][0] *180/3.1415, // x1 = estimated angle (deg)
+                                                     EKF_IMU.GetX()[1][0] *180/3.1415, // x2 = estimated angular velocity (deg/s)
+                                                     Y[0][0],   // y1 = measured acceleration magnitude
+                                                     Y[1][0]*50 // y2 = measured gyro x/y magnitude (times 50)
+        );
+        Serial.print(bufferTxSer);
+        Serial.print('\n');
 
     }
 }
