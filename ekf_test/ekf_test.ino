@@ -1,115 +1,103 @@
-/*************************************************************************************************************
+/*
  * 
- *  Based on pronenewbits EKF library: https://github.com/pronenewbits/Embedded_EKF_Library
+ *  Model state X:
+ *      x1 = theta = angle of the swing (rad)
+ *      x2 = thetadot = angular velocity of the swing (rad/s)
+ *  Observables Y:
+ *      y1 = acceleration magnitude
+ *      y2 = gyroscope x-y magnitude (not implemented)
  * 
- * 
- * The model then can be described in state space formulation as:
- *  The state variables:
- *      x1 = theta        --> dx1/dt = dtheta/dt
- *      x2 = dtheta/dt    --> dx2/dt = (dtheta)^2)/dt^2
- *  The output variables:
- *      y1 = x
- *      y2 = y
- * 
- *  The update function in continuous time:
- *      dx1/dt = x2
- *      dx2/dt = -g/l * sin(x1)
- *  The update function in discrete time:
+ *  State update function:
  *      x1(k+1) = x1(k) + x2(k)*dt
  *      x2(k+1) = x2(k) - g/l*sin(x1(k))*dt
+ *      
+ *  Using pronenewbits EKF implementation: https://github.com/pronenewbits/Embedded_EKF_Library
  * 
- ************************************************************************************************************/
-// EKF includes
+ */
+ 
+// Embedded_EKF_Library
 #include <Wire.h>
 #include <elapsedMillis.h>
 #include "konfig.h"
 #include "matrix.h"
 #include "ekf.h"
 
-// MPU includes
+// MPU
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 
-// Bluetooth includes
+// Bluetooth 
 #include <SoftwareSerial.h>
 
-// Test-case data
+// Pre-recorded sensor data for testing
 #include "mock_sensor_data.h"
 #define USE_MOCK_SENSOR_DATA
 
-
 // MPU
-
 Adafruit_MPU6050 mpu;
 
-
 // Bluetooth
-
 int bluetoothTx = 0;
 int bluetoothRx = 1;
 SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
 
-/* =============================================== The pendulum model constants =============================================== */
-#define pend_g      (10.05)             /* acceleration measured at rest (ms^-2) */
-#define pend_l      (2.0)             /* length of the pendulum rod, in meters */
+// Physical constants
+#define pend_g      (10.05)  // acceleration measured at rest (ms^-2)
+#define pend_l      (2.0)    // length of swing (m)
 
 
-
-/* ============================================ EKF variables/function declaration ============================================ */
-/* Just example; in konfig.h: 
- *  SS_X_LEN = 2
- *  SS_Z_LEN = 2
- *  SS_U_LEN = 0 
+/* 
+ *  EKF variables/declarations
  */
-/* EKF initialization constant -------------------------------------------------------------------------------------- */
+
+// EKF covariance matrices
+
 #define P_INIT      (10.)
 #define Q_INIT      (0.001)
 #define R_INIT      (1)
-/* P(k=0) variable -------------------------------------------------------------------------------------------------- */
+// P(k=0) state covariance matrix
 float_prec EKF_PINIT_data[SS_X_LEN*SS_X_LEN] = {P_INIT, 0,
                                                 0,      P_INIT};
 Matrix EKF_PINIT(SS_X_LEN, SS_X_LEN, EKF_PINIT_data);
-/* Q constant ------------------------------------------------------------------------------------------------------- */
+// Q = process noise covariance matrix
 float_prec EKF_QINIT_data[SS_X_LEN*SS_X_LEN] = {Q_INIT, 0,
                                                 0,      Q_INIT};
 Matrix EKF_QINIT(SS_X_LEN, SS_X_LEN, EKF_QINIT_data);
-/* R constant ------------------------------------------------------------------------------------------------------- */
+// R = measurement noise covariance matrix
 float_prec EKF_RINIT_data[SS_Z_LEN*SS_Z_LEN] = {R_INIT, 0,
                                                 0,      R_INIT};
 Matrix EKF_RINIT(SS_Z_LEN, SS_Z_LEN, EKF_RINIT_data);
-/* Nonlinear & linearization function ------------------------------------------------------------------------------- */
+
+// Nonlinear & linearization functions
 bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U);
 bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U);
 bool Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U);
 bool Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U);
-/* EKF variables ---------------------------------------------------------------------------------------------------- */
+// EKF variables
 Matrix X_est_init(SS_X_LEN, 1);
 Matrix Y(SS_Z_LEN, 1);
 Matrix U(SS_U_LEN, 1);
-/* EKF system declaration ------------------------------------------------------------------------------------------- */
+// EKF system declaration
 EKF EKF_IMU(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT,
             Main_bUpdateNonlinearX, Main_bUpdateNonlinearY, Main_bCalcJacobianF, Main_bCalcJacobianH);
-
-
-
-/* ========================================= Auxiliary variables/function declaration ========================================= */
+// EKF auxiliary variables
 elapsedMillis timerLed, timerEKF;
 uint64_t u64compuTime;
 char bufferTxSer[100];
 
 
+/*
+ * Setup
+ */
 
 void setup() {
-    /* serial to display data */
+    // Init serial and Bluetooth
     Serial.begin(115200);
     delay(100);
-
-    /* Bluetooth */
-
     bluetooth.begin(115200);  // BlueSMiRF defaults to 115200bps
 
-    /* MÅU */
+    // MPU/sensor
 
     if (!mpu.begin()) {
       Serial.println("Failed to find MPU6050 chip");
@@ -121,24 +109,25 @@ void setup() {
     mpu.setGyroRange(MPU6050_RANGE_250_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
+    // EKF init
     
     X_est_init.vSetToZero();
-        
-    /* Observe that we set the wrong initial x_estimated value!  (X_UKF(k=0) != X_TRUE(k=0)) */
     X_est_init[0][0] = -3.14159265359/4.;
-    
     EKF_IMU.vReset(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT);
 
     delay(100);
 
 }
 
+/*
+ * Main loop
+ */
 
 void loop() {
     if (timerEKF >= SS_DT_MILIS) {
         timerEKF = 0;
         
-        /* ================== Read sensor data ================== */
+        // Read sensor data
 
         #ifndef USE_MOCK_SENSOR_DATA
 
@@ -163,13 +152,15 @@ void loop() {
         #endif
 
         
-        /* =========================== Log measurements to bluetooth for test case data ========================== */
+        // Log measurements to bluetooth to use as pre-recorded test case data
+
         //snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", Y[0][0], Y[1][0] );
         //bluetooth.print(bufferTxSer);
         //bluetooth.print('\n');
         
         
-        /* ============================= Update the Kalman Filter ============================== */
+        // Update Kalman filter
+        
         u64compuTime = micros();
         if (!EKF_IMU.bUpdate(Y, U)) {
             X_est_init.vSetToZero();
@@ -177,10 +168,10 @@ void loop() {
             Serial.println("Whoop ");
         }
         u64compuTime = (micros() - u64compuTime);
-        /* ----------------------------- Update the Kalman Filter ------------------------------ */
         
         
-        /* =========================== Print diagnostics to bluetooth/serial for live plotting ========================== */
+        // Print state to bluetooth/serial for live plotting
+        
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f",
                                                      EKF_IMU.GetX()[0][0] *180/3.1415, // x1 = estimated angle (deg)
                                                      EKF_IMU.GetX()[1][0] *180/3.1415, // x2 = estimated angular velocity (deg/s)
