@@ -91,7 +91,7 @@ void setup() {
  */
 
 void loop() {
-    if (timerEKF >= SS_DT_MILIS) {
+    if (timerEKF >= swingEKF.Step_size_s*1000) {
         timerEKF = 0;
         
         // Read sensor data

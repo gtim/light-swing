@@ -29,12 +29,6 @@
 #include "ekf.h"
 
 
-// Nonlinear & linearization functions
-
-bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U);
-bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U);
-bool Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U);
-bool Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U);
 
 
 // SwingEKF Class
@@ -52,7 +46,16 @@ public:
     float_prec getEstAngle()           { return ekf.GetX()[0][0]; }
     float_prec getEstAngularVelocity() { return ekf.GetX()[1][0]; }
 
+    // Sample time / time step
+    static constexpr float_prec Step_size_s  = 30e-3; // 30ms
+
 private:
+    // Linearization functions
+    static bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U);
+    static bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U);
+    static bool Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U);
+    static bool Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U);
+
     Matrix Y;
     Matrix U;
     Matrix X_est_init;

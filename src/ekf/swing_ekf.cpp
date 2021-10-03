@@ -40,7 +40,7 @@ void SwingEKF::reset() {
     X_est_init.vSetToZero();
     X_est_init[0][0] = -3.14159265359/4.;
     ekf.vReset(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT);
-}	
+}
 
 bool SwingEKF::kalmanUpdateStep( float_prec measured_angle, float_prec measured_angular_velocity ) {
 	Y[0][0] = measured_angle;
@@ -49,9 +49,12 @@ bool SwingEKF::kalmanUpdateStep( float_prec measured_angle, float_prec measured_
 }
 
 
+/*
+ * Linearization functions
+ */
 
 
-bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U)
+bool SwingEKF::Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U)
 {
     /* Insert the nonlinear update transformation here
      *          x(k+1) = f[x(k), u(k)]
@@ -70,13 +73,13 @@ bool Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Matrix& U)
         theta = theta + 3.14159265359;
     }
     
-    X_Next[0][0] = theta + (theta_dot*SS_DT);   
-    X_Next[1][0] = theta_dot - (pend_g/pend_l)*sin(theta)*SS_DT;
+    X_Next[0][0] = theta + (theta_dot*Step_size_s);   
+    X_Next[1][0] = theta_dot - (pend_g/pend_l)*sin(theta)*Step_size_s;
     
     return true;
 }
 
-bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U)
+bool SwingEKF::Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U)
 {
     /* Insert the nonlinear measurement transformation here
      *          y(k)   = h[x(k), u(k)]
@@ -93,7 +96,7 @@ bool Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& U)
     return true;
 }
 
-bool Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U)
+bool SwingEKF::Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U)
 {
     /*  The update function in discrete time:
      *      x1(k+1) = f1(x,u) = x1(k) + x2(k)*dt
@@ -114,15 +117,15 @@ bool Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U)
     float_prec theta     = X[0][0];
 
     F[0][0] =  1.000;
-    F[0][1] =  SS_DT;
+    F[0][1] =  Step_size_s;
 
-    F[1][0] =  -pend_g/pend_l*cos(theta)*SS_DT;
+    F[1][0] =  -pend_g/pend_l*cos(theta)*Step_size_s;
     F[1][1] =  1.000;
     
     return true;
 }
 
-bool Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
+bool SwingEKF::Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
 {
     /*  The output (in discrete time):
      *      y1(k) = h1(x) = acceleration magnitude = g + l * theta_dot**2 // small-angle approximation
