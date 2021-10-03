@@ -189,8 +189,8 @@ void loop() {
         // Print state to bluetooth/serial for live plotting
         
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f %.3f",
-                                                     swingEKF.ekf.GetX()[0][0] *180/3.1415, // x1 = estimated angle (deg)
-                                                     swingEKF.ekf.GetX()[1][0] *180/3.1415, // x2 = estimated angular velocity (deg/s)
+                                                     swingEKF.getEstAngle() *180/3.1415, // x1 = estimated angle (deg)
+                                                     swingEKF.getEstAngularVelocity() *180/3.1415, // x2 = estimated angular velocity (deg/s)
                                                      swingEKF.Y[0][0],   // y1 = measured acceleration magnitude
                                                      swingEKF.Y[1][0]*50, // y2 = measured gyro x/y magnitude (times 50)
                                                      (double)(millis()-last_swingturn_ms)/100 // time since last swing turn (ms/100)

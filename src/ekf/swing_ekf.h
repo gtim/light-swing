@@ -18,6 +18,11 @@ class SwingEKF
 public:
     SwingEKF();
     void reset();
+
+    // Getters for estimated state
+    float_prec getEstAngle()           { return ekf.GetX()[0][0]; }
+    float_prec getEstAngularVelocity() { return ekf.GetX()[1][0]; }
+
     Matrix Y;
     Matrix U;
 private:
