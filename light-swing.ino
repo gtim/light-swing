@@ -149,7 +149,7 @@ void loop() {
         
         // Update Kalman filter
         
-        if (!swingEKF.ekf.bUpdate(swingEKF.Y, swingEKF.U)) {
+        if (!swingEKF.kalmanUpdateStep(swingEKF.Y[0][0],swingEKF.Y[1][0])) {
             swingEKF.reset();
             Serial.println("Whoop ");
         }

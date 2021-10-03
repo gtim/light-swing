@@ -19,13 +19,16 @@ public:
     SwingEKF();
     void reset();
 
+    // Run Kalman update (once per time step)
+    bool kalmanUpdateStep( float_prec measured_angle, float_prec measured_angular_velocity );
+
     // Getters for estimated state
     float_prec getEstAngle()           { return ekf.GetX()[0][0]; }
     float_prec getEstAngularVelocity() { return ekf.GetX()[1][0]; }
 
     Matrix Y;
-    Matrix U;
 private:
+    Matrix U;
     Matrix X_est_init;
 public:
     EKF ekf;

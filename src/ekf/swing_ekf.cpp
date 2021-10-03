@@ -33,7 +33,6 @@ SwingEKF::SwingEKF()
            Main_bUpdateNonlinearX, Main_bUpdateNonlinearY,
            Main_bCalcJacobianF, Main_bCalcJacobianH )
 {
-	//EKF( XInit, P, Q, R, Main_bUpdateNonlinearX, Main_bUpdateNonlinearY, Main_bCalcJacobianF, Main_bCalcJacobianH );
 }
 
 void SwingEKF::reset() {
@@ -41,6 +40,12 @@ void SwingEKF::reset() {
     X_est_init[0][0] = -3.14159265359/4.;
     ekf.vReset(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT);
 }	
+
+bool SwingEKF::kalmanUpdateStep( float_prec measured_angle, float_prec measured_angular_velocity ) {
+	Y[0][0] = measured_angle;
+	Y[1][0] = measured_angular_velocity;
+	return ekf.bUpdate(Y, U);
+}
 
 
 
