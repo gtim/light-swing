@@ -2,6 +2,7 @@
 
 
 // Physical constants
+
 #define pend_g      (10.05)  // acceleration measured at rest (ms^-2)
 #define pend_l      (2.0)    // length of swing (m)
 

@@ -1,26 +1,6 @@
-/*
- * 
- *  Model state X:
- *      x1 = theta = angle of the swing (rad)
- *      x2 = thetadot = angular velocity of the swing (rad/s)
- *  Observables Y:
- *      y1 = acceleration magnitude
- *      y2 = gyroscope x-y magnitude (not implemented)
- * 
- *  State update function:
- *      x1(k+1) = x1(k) + x2(k)*dt
- *      x2(k+1) = x2(k) - g/l*sin(x1(k))*dt
- *      
- *  Using pronenewbits EKF implementation: https://github.com/pronenewbits/Embedded_EKF_Library
- * 
- */
- 
 // Embedded_EKF_Library
 #include <Wire.h> // also for MPU
 #include <elapsedMillis.h>
-#include "src/ekf/konfig.h"
-#include "src/ekf/matrix.h"
-#include "src/ekf/ekf.h"
 #include "src/ekf/swing_ekf.h"
 
 // MPU
@@ -60,10 +40,8 @@ uint32_t last_swingturn_ms = 0; // millis() of last swing turn = angvel zero-cro
 uint32_t last_swingturn_posneg_ms = 0; // angvel pos->neg (arbitrarily left/right)
 uint32_t last_swingturn_negpos_ms = 0;
 
-// EKF object
-
+// EKF
 SwingEKF swingEKF;
-// EKF auxiliary variables
 elapsedMillis timerEKF;
 char bufferTxSer[100];
 
@@ -158,12 +136,11 @@ void loop() {
         // Update lightshow state
 
         // Angular velocity crosses zero = swing turns at end of arc
-        float_prec angvel_est = swingEKF.ekf.GetX()[1][0];
-        if (          angvel_positive && angvel_est < 0 ) {
+        if (          angvel_positive && swingEKF.getEstAngularVelocity() < 0 ) {
           last_swingturn_ms = millis();
           last_swingturn_posneg_ms = last_swingturn_ms;
           angvel_positive = false;
-        } else if ( ! angvel_positive && angvel_est > 0 ) {
+        } else if ( ! angvel_positive && swingEKF.getEstAngularVelocity() > 0 ) {
           last_swingturn_ms = millis();
           last_swingturn_negpos_ms = last_swingturn_ms;
           angvel_positive = true;
