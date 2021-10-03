@@ -46,7 +46,7 @@ public:
     float_prec getEstAngle()           { return ekf.GetX()[0][0]; }
     float_prec getEstAngularVelocity() { return ekf.GetX()[1][0]; }
 
-    // Sample time / time step
+    // Sample time / time step (s)
     static constexpr float_prec Step_size_s  = 30e-3; // 30ms
 
 private:
@@ -60,6 +60,11 @@ private:
     Matrix U;
     Matrix X_est_init;
     EKF ekf;
+    
+    // Acceleration at rest (ms^-2)
+    static constexpr float_prec Pend_g = 10.05; 
+    // Length of swing (m)
+    static constexpr float_prec Pend_l = 2.0; 
 };
 
 

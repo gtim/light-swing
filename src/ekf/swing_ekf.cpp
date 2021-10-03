@@ -1,12 +1,9 @@
 #include "swing_ekf.h"
 
 
-// Physical constants
-
-#define pend_g      (10.05)  // acceleration measured at rest (ms^-2)
-#define pend_l      (2.0)    // length of swing (m)
-
-// EKF covariance matrices
+/*
+ * EKF covariance matrices
+ */
 
 #define P_INIT      (10.)
 #define Q_INIT      (0.001)
@@ -25,6 +22,9 @@ float_prec EKF_RINIT_data[SS_Z_LEN*SS_Z_LEN] = {R_INIT, 0,
 Matrix EKF_RINIT(SS_Z_LEN, SS_Z_LEN, EKF_RINIT_data);
 
 
+/*
+ * Constructor
+ */
 
 SwingEKF::SwingEKF()
     : Y(SS_Z_LEN, 1)
@@ -36,11 +36,19 @@ SwingEKF::SwingEKF()
 {
 }
 
+/*
+ * Reset internal state
+ */
+
 void SwingEKF::reset() {
     X_est_init.vSetToZero();
     X_est_init[0][0] = -3.14159265359/4.;
     ekf.vReset(X_est_init, EKF_PINIT, EKF_QINIT, EKF_RINIT);
 }
+
+/*
+ * Run Kalman update step, fed sensor input Y
+ */
 
 bool SwingEKF::kalmanUpdateStep( float_prec measured_angle, float_prec measured_angular_velocity ) {
 	Y[0][0] = measured_angle;
@@ -74,7 +82,7 @@ bool SwingEKF::Main_bUpdateNonlinearX(Matrix& X_Next, const Matrix& X, const Mat
     }
     
     X_Next[0][0] = theta + (theta_dot*Step_size_s);   
-    X_Next[1][0] = theta_dot - (pend_g/pend_l)*sin(theta)*Step_size_s;
+    X_Next[1][0] = theta_dot - (Pend_g/Pend_l)*sin(theta)*Step_size_s;
     
     return true;
 }
@@ -90,7 +98,7 @@ bool SwingEKF::Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& 
      */
     float_prec theta_dot = X[1][0];
     
-    Y[0][0] = pend_g + pend_l * theta_dot*theta_dot;
+    Y[0][0] = Pend_g + Pend_l * theta_dot*theta_dot;
     Y[1][0] = 0;
     
     return true;
@@ -119,7 +127,7 @@ bool SwingEKF::Main_bCalcJacobianF(Matrix& F, const Matrix& X, const Matrix& U)
     F[0][0] =  1.000;
     F[0][1] =  Step_size_s;
 
-    F[1][0] =  -pend_g/pend_l*cos(theta)*Step_size_s;
+    F[1][0] =  -Pend_g/Pend_l*cos(theta)*Step_size_s;
     F[1][1] =  1.000;
     
     return true;
@@ -146,7 +154,7 @@ bool SwingEKF::Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
     float_prec theta_dot = X[1][0];
 
     H[0][0] = 0;
-    H[0][1] = 2 * pend_l * theta_dot;
+    H[0][1] = 2 * Pend_l * theta_dot;
     
     H[1][0] = 0;
     H[1][1] = 0;
