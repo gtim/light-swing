@@ -42,6 +42,7 @@
 
 // MPU
 Adafruit_MPU6050 mpu;
+float measured_accel_abs, measured_gyro_abs;
 
 // Bluetooth
 int bluetoothTx = 0;
@@ -125,16 +126,16 @@ void loop() {
           mpu.getEvent(&a, &g, &temp);
   
           // acceleration magnitude 
-          swingEKF.Y[0][0] = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
+          measured_accel_abs = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
           // gyro x/y magnitude (not including z = twist)
-          swingEKF.Y[1][0] = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
+          measured_gyro_abs  = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
 
         #else
 
           // Use pre-recorded mock data
 
-          swingEKF.Y[0][0] = mock_sensor_data[mock_sensor_data_row_i][0];
-          swingEKF.Y[1][0] = mock_sensor_data[mock_sensor_data_row_i][1];
+          measured_accel_abs = mock_sensor_data[mock_sensor_data_row_i][0];
+          measured_gyro_abs  = mock_sensor_data[mock_sensor_data_row_i][1];
           mock_sensor_data_row_i = ( mock_sensor_data_row_i + 1 ) % MOCK_SENSOR_DATA_NUM_ROWS;
           
         #endif
@@ -142,14 +143,14 @@ void loop() {
         
         // Log measurements to bluetooth to use as pre-recorded test case data
 
-        //snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", Y[0][0], Y[1][0] );
+        //snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", measured_accel_abs, measured_gyro_abs );
         //bluetooth.print(bufferTxSer);
         //bluetooth.print('\n');
         
         
         // Update Kalman filter
         
-        if (!swingEKF.kalmanUpdateStep(swingEKF.Y[0][0],swingEKF.Y[1][0])) {
+        if (!swingEKF.kalmanUpdateStep(measured_accel_abs,measured_gyro_abs)) {
             swingEKF.reset();
             Serial.println("Whoop ");
         }
@@ -191,8 +192,8 @@ void loop() {
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f %.3f",
                                                      swingEKF.getEstAngle() *180/3.1415, // x1 = estimated angle (deg)
                                                      swingEKF.getEstAngularVelocity() *180/3.1415, // x2 = estimated angular velocity (deg/s)
-                                                     swingEKF.Y[0][0],   // y1 = measured acceleration magnitude
-                                                     swingEKF.Y[1][0]*50, // y2 = measured gyro x/y magnitude (times 50)
+                                                     measured_accel_abs,   // y1 = measured acceleration magnitude
+                                                     measured_gyro_abs*50, // y2 = measured gyro x/y magnitude (times 50)
                                                      (double)(millis()-last_swingturn_ms)/100 // time since last swing turn (ms/100)
         );
         Serial.print(bufferTxSer);

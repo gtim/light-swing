@@ -26,8 +26,8 @@ public:
     float_prec getEstAngle()           { return ekf.GetX()[0][0]; }
     float_prec getEstAngularVelocity() { return ekf.GetX()[1][0]; }
 
-    Matrix Y;
 private:
+    Matrix Y;
     Matrix U;
     Matrix X_est_init;
 public:
