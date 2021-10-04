@@ -43,9 +43,9 @@ void loop() {
     delay(100);
   }
   Serial.print("x offset: ");
-  Serial.println( gyro_output_sum[0] / N, 4 );
+  Serial.println( - gyro_output_sum[0] / N, 4 );
   Serial.print("y offset: ");
-  Serial.println( gyro_output_sum[1] / N, 4 );
+  Serial.println( - gyro_output_sum[1] / N, 4 );
   Serial.print("z offset: ");
-  Serial.println( gyro_output_sum[2] / N, 4 );
+  Serial.println( - gyro_output_sum[2] / N, 4 );
 }
