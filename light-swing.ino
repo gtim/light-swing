@@ -105,10 +105,10 @@ void loop() {
   
           // acceleration magnitude 
           measured_accel_abs = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
-          // gyro x/y magnitude (not including z = twist)
-          measured_gyro_x = g.gyro.x;
-          measured_gyro_y = g.gyro.y;
-          measured_gyro_z = g.gyro.z;
+          // gyro x/y/z, offsets from calibrate-gyro.ino
+          measured_gyro_x = g.gyro.x - 0.0007;
+          measured_gyro_y = g.gyro.y + 0.0286;
+          measured_gyro_z = g.gyro.z - 0.0298;
 
         #else
 
@@ -140,11 +140,11 @@ void loop() {
         // Update lightshow state
 
         // Angular velocity crosses zero = swing turns at end of arc
-        if (          angvel_positive && swingEKF.getEstAngularVelocity() < 0 ) {
+        if (          angvel_positive && swingEKF.getEstRopeAngularVelocity() < 0 ) {
           last_swingturn_ms = millis();
           last_swingturn_posneg_ms = last_swingturn_ms;
           angvel_positive = false;
-        } else if ( ! angvel_positive && swingEKF.getEstAngularVelocity() > 0 ) {
+        } else if ( ! angvel_positive && swingEKF.getEstRopeAngularVelocity() > 0 ) {
           last_swingturn_ms = millis();
           last_swingturn_negpos_ms = last_swingturn_ms;
           angvel_positive = true;
@@ -170,12 +170,11 @@ void loop() {
         
         // Print state to bluetooth/serial for live plotting
         
-        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f %.3f",
-                                                     swingEKF.getEstAngle() *180/3.1415, // x1 = estimated angle (deg)
-                                                     swingEKF.getEstAngularVelocity() *180/3.1415, // x2 = estimated angular velocity (deg/s)
-                                                     measured_gyro_x*50,
-                                                     measured_gyro_y*50,
-                                                     measured_gyro_z*50
+        snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f",
+                                                     swingEKF.getEstRopeAngle() *180/3.1415, // x1 = estimated angle (deg)
+                                                     swingEKF.getEstRopeAngularVelocity() *180/3.1415, // x2 = estimated angular velocity (deg/s)
+                                                     swingEKF.getEstSwingRotation() *180/3.1415,
+                                                     swingEKF.getEstSwingRotationalSpeed() *180/3.1415
         );
         bluetooth.print(bufferTxSer);
         bluetooth.print('\n');

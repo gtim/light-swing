@@ -14,7 +14,7 @@
 
 
 /* State Space dimension */
-#define SS_X_LEN    (2)
+#define SS_X_LEN    (4)
 #define SS_Z_LEN    (4)
 #define SS_U_LEN    (0)
 

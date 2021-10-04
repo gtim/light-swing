@@ -5,11 +5,15 @@
  *  with mounted accelerometer and gyroscope.
  *
  *  Model state X:
- *      x1 = angle of the swing (rad)
- *      x2 = angular velocity of the swing (rad/s)
+ *      x1 = angle of the rope (rad)
+ *      x2 = angular velocity of the rope (rad/s)
+ *      x3 = rotation of the swing (rad)
+ *      x4 = rotational speed of the swing (rad/s)
  *  Observables Y:
  *      y1 = acceleration magnitude
- *      y2 = gyroscope x-y magnitude (not implemented)
+ *      y2 = gyroscope x
+ *      y3 = gyroscope y
+ *      y4 = gyroscope z
  * 
  *  State update function:
  *      x1(k+1) = x1(k) + x2(k)*dt
@@ -46,8 +50,10 @@ public:
                            float_prec measured_gyro_z );
 
     // Getters for estimated state
-    float_prec getEstAngle()           { return ekf.GetX()[0][0]; }
-    float_prec getEstAngularVelocity() { return ekf.GetX()[1][0]; }
+    float_prec getEstRopeAngle()            { return ekf.GetX()[0][0]; }
+    float_prec getEstRopeAngularVelocity()  { return ekf.GetX()[1][0]; }
+    float_prec getEstSwingRotation()        { return ekf.GetX()[2][0]; }
+    float_prec getEstSwingRotationalSpeed() { return ekf.GetX()[3][0]; }
 
     // Sample time / time step (s)
     static constexpr float_prec Step_size_s  = 30e-3; // 30ms
