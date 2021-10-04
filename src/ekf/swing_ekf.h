@@ -40,7 +40,10 @@ public:
     void reset();
 
     // Run Kalman update (once per time step)
-    bool kalmanUpdateStep( float_prec measured_angle, float_prec measured_angular_velocity );
+    bool kalmanUpdateStep( float_prec measured_accel_abs,
+                           float_prec measured_gyro_x, 
+                           float_prec measured_gyro_y,
+                           float_prec measured_gyro_z );
 
     // Getters for estimated state
     float_prec getEstAngle()           { return ekf.GetX()[0][0]; }

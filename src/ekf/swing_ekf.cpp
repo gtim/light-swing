@@ -17,8 +17,10 @@ float_prec EKF_QINIT_data[SS_X_LEN*SS_X_LEN] = {Q_INIT, 0,
                                                 0,      Q_INIT};
 Matrix EKF_QINIT(SS_X_LEN, SS_X_LEN, EKF_QINIT_data);
 // R = measurement noise covariance matrix
-float_prec EKF_RINIT_data[SS_Z_LEN*SS_Z_LEN] = {R_INIT, 0,
-                                                0,      R_INIT};
+float_prec EKF_RINIT_data[SS_Z_LEN*SS_Z_LEN] = {R_INIT, 0,      0,      0, 
+                                                0,      R_INIT, 0,      0,
+                                                0,      0,      R_INIT, 0,
+                                                0,      0,      0,      R_INIT};
 Matrix EKF_RINIT(SS_Z_LEN, SS_Z_LEN, EKF_RINIT_data);
 
 
@@ -50,9 +52,11 @@ void SwingEKF::reset() {
  * Run Kalman update step, fed sensor input Y
  */
 
-bool SwingEKF::kalmanUpdateStep( float_prec measured_angle, float_prec measured_angular_velocity ) {
-	Y[0][0] = measured_angle;
-	Y[1][0] = measured_angular_velocity;
+bool SwingEKF::kalmanUpdateStep( float_prec accel_abs, float_prec gyro_x, float_prec gyro_y, float_prec gyro_z ) {
+	Y[0][0] = accel_abs;
+	Y[1][0] = gyro_x;
+	Y[2][0] = gyro_y;
+	Y[3][0] = gyro_z;
 	return ekf.bUpdate(Y, U);
 }
 
@@ -100,6 +104,8 @@ bool SwingEKF::Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& 
     
     Y[0][0] = Pend_g + Pend_l * theta_dot*theta_dot;
     Y[1][0] = 0;
+    Y[2][0] = 0;
+    Y[3][0] = 0;
     
     return true;
 }
@@ -158,6 +164,10 @@ bool SwingEKF::Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
     
     H[1][0] = 0;
     H[1][1] = 0;
+    H[2][0] = 0;
+    H[2][1] = 0;
+    H[3][0] = 0;
+    H[3][1] = 0;
     
     return true;
 }

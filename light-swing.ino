@@ -16,13 +16,13 @@
 
 // Pre-recorded sensor data for testing
 #include "mock_sensor_data.h"
-#define USE_MOCK_SENSOR_DATA
+//#define USE_MOCK_SENSOR_DATA
 
 
 
 // MPU
 Adafruit_MPU6050 mpu;
-float measured_accel_abs, measured_gyro_abs;
+float_prec measured_accel_abs, measured_gyro_x, measured_gyro_y, measured_gyro_z;
 
 // Bluetooth
 int bluetoothTx = 0;
@@ -106,14 +106,18 @@ void loop() {
           // acceleration magnitude 
           measured_accel_abs = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
           // gyro x/y magnitude (not including z = twist)
-          measured_gyro_abs  = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
+          measured_gyro_x = g.gyro.x;
+          measured_gyro_y = g.gyro.y;
+          measured_gyro_z = g.gyro.z;
 
         #else
 
           // Use pre-recorded mock data
 
           measured_accel_abs = mock_sensor_data[mock_sensor_data_row_i][0];
-          measured_gyro_abs  = mock_sensor_data[mock_sensor_data_row_i][1];
+          measured_gyro_x = 0; // TODO
+          measured_gyro_y = 0;
+          measured_gyro_z = 0;
           mock_sensor_data_row_i = ( mock_sensor_data_row_i + 1 ) % MOCK_SENSOR_DATA_NUM_ROWS;
           
         #endif
@@ -128,7 +132,7 @@ void loop() {
         
         // Update Kalman filter
         
-        if (!swingEKF.kalmanUpdateStep(measured_accel_abs,measured_gyro_abs)) {
+        if ( ! swingEKF.kalmanUpdateStep( measured_accel_abs, measured_gyro_x, measured_gyro_y, measured_gyro_z ) ) {
             swingEKF.reset();
             Serial.println("Whoop ");
         }
@@ -169,12 +173,12 @@ void loop() {
         snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.3f %.3f %.3f %.3f %.3f",
                                                      swingEKF.getEstAngle() *180/3.1415, // x1 = estimated angle (deg)
                                                      swingEKF.getEstAngularVelocity() *180/3.1415, // x2 = estimated angular velocity (deg/s)
-                                                     measured_accel_abs,   // y1 = measured acceleration magnitude
-                                                     measured_gyro_abs*50, // y2 = measured gyro x/y magnitude (times 50)
-                                                     (double)(millis()-last_swingturn_ms)/100 // time since last swing turn (ms/100)
+                                                     measured_gyro_x*50,
+                                                     measured_gyro_y*50,
+                                                     measured_gyro_z*50
         );
-        Serial.print(bufferTxSer);
-        Serial.print('\n');
+        bluetooth.print(bufferTxSer);
+        bluetooth.print('\n');
         
     }
 }
