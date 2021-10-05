@@ -94,12 +94,12 @@ bool SwingEKF::Main_bUpdateNonlinearY(Matrix& Y, const Matrix& X, const Matrix& 
      *
      *  The output (in discrete time):
      *      y1(k) =  acceleration magnitude = g + l * theta_dot**2 // small-angle approximation
-     *      y2(k) =  TODO
+     *      y2(k) =  abs( theta_dot )
      */
     float_prec theta_dot = X[1][0];
     
     Y[0][0] = Pend_g + Pend_l * theta_dot*theta_dot;
-    Y[1][0] = 0;
+    Y[1][0] = abs(theta_dot);
     
     return true;
 }
@@ -137,18 +137,15 @@ bool SwingEKF::Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
 {
     /*  The output (in discrete time):
      *      y1(k) = h1(x) = acceleration magnitude = g + l * theta_dot**2 // small-angle approximation
-     *      y2(k) = h2(x) = TODO
+     *      y2(k) = h2(x) = abs(theta_dot)
      * 
      * 
      *  The Jacobian matrix is 2x2 matrix (because we have 2 outputs):
      *      H = [d(h1)/dx1    d(h1)/dx2]
      *          [d(h2)/dx1    d(h2)/dx2]
      * 
-     *      H = [d(sin(x1(k)) * l)/dx1      d(sin(x1(k)) * l)/dx2 ]
-     *          [d(-cos(x1(k)) * l)/dx1     d(-cos(x1(k)) * l)/dx2]
-     * 
-     *      H = [cos(x1(k)) * l      0]
-     *          [sin(x1(k)) * l      0]
+     *      H = [ 0    2*l*theta_dot ]
+     *          [ 0  sgn(theta_dot)  ]
      * 
      */
     float_prec theta_dot = X[1][0];
@@ -157,7 +154,13 @@ bool SwingEKF::Main_bCalcJacobianH(Matrix& H, const Matrix& X, const Matrix& U)
     H[0][1] = 2 * Pend_l * theta_dot;
     
     H[1][0] = 0;
-    H[1][1] = 0;
+    if ( theta_dot > 0 ) {
+	    H[1][1] = 1;
+    } else if ( theta_dot < 0 ) {
+	    H[1][1] = -1;
+    } else {
+	    H[1][1] = 0; // discontinuous
+    }
     
     return true;
 }

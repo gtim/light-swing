@@ -9,7 +9,7 @@
  *      x2 = angular velocity of the swing (rad/s)
  *  Observables Y:
  *      y1 = acceleration magnitude
- *      y2 = gyroscope x-y magnitude (not implemented)
+ *      y2 = gyroscope x-y magnitude
  * 
  *  State update function:
  *      x1(k+1) = x1(k) + x2(k)*dt

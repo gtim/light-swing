@@ -175,7 +175,7 @@ void loop() {
                                                      swingEKF.getEstAngle() *180/3.1415, // x1 = estimated angle (deg)
                                                      swingEKF.getEstAngularVelocity() *180/3.1415, // x2 = estimated angular velocity (deg/s)
                                                      measured_accel_abs,   // y1 = measured acceleration magnitude
-                                                     measured_gyro_abs*50, // y2 = measured gyro x/y magnitude (times 50)
+                                                     measured_gyro_abs*180/3.1415, // y2 = measured gyro x/y magnitude (deg/s)
                                                      (double)(millis()-last_swingturn_ms)/100 // time since last swing turn (ms/100)
         );
         Serial.print(bufferTxSer);
