@@ -23,6 +23,9 @@
 // MPU
 Adafruit_MPU6050 mpu;
 float measured_accel_abs, measured_gyro_abs;
+const float Gyro_offset_x =  0.0007;
+const float Gyro_offset_y = -0.0286;
+const float Gyro_offset_z =  0.0298;
 
 // Bluetooth
 int bluetoothTx = 0;
@@ -106,7 +109,9 @@ void loop() {
           // acceleration magnitude 
           measured_accel_abs = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
           // gyro x/y magnitude (not including z = twist)
-          measured_gyro_abs  = sqrt( g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y );
+          float measured_gyro_x = g.gyro.x - Gyro_offset_x;
+          float measured_gyro_y = g.gyro.y - Gyro_offset_y;
+          measured_gyro_abs  = sqrt( measured_gyro_x * measured_gyro_x + measured_gyro_y * measured_gyro_y );
 
         #else
 
