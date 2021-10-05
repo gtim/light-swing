@@ -28,8 +28,8 @@ const float Gyro_offset_y = -0.0286;
 const float Gyro_offset_z =  0.0298;
 
 // Bluetooth
-int bluetoothTx = 0;
-int bluetoothRx = 1;
+const uint8_t bluetoothTx = 0;
+const uint8_t bluetoothRx = 1;
 SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
 // FastLED
