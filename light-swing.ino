@@ -22,7 +22,6 @@
 
 // MPU
 Adafruit_MPU6050 mpu;
-float measured_accel_abs, measured_gyro_abs;
 const float Gyro_offset_x =  0.0007;
 const float Gyro_offset_y = -0.0286;
 const float Gyro_offset_z =  0.0298;
@@ -99,37 +98,8 @@ void loop() {
         
         // Read sensor data
 
-        #ifndef USE_MOCK_SENSOR_DATA
-
-          // Use live sensor data
-          
-          sensors_event_t a, g, temp; // acceleration, gyro, temperature
-          mpu.getEvent(&a, &g, &temp);
-  
-          // acceleration magnitude 
-          measured_accel_abs = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
-          // gyro x/y magnitude (not including z = twist)
-          float measured_gyro_x = g.gyro.x - Gyro_offset_x;
-          float measured_gyro_y = g.gyro.y - Gyro_offset_y;
-          measured_gyro_abs  = sqrt( measured_gyro_x * measured_gyro_x + measured_gyro_y * measured_gyro_y );
-
-        #else
-
-          // Use pre-recorded mock data
-
-          measured_accel_abs = mock_sensor_data[mock_sensor_data_row_i][0];
-          measured_gyro_abs  = mock_sensor_data[mock_sensor_data_row_i][1];
-          mock_sensor_data_row_i = ( mock_sensor_data_row_i + 1 ) % MOCK_SENSOR_DATA_NUM_ROWS;
-          
-        #endif
-
-        
-        // Log measurements to bluetooth to use as pre-recorded test case data
-
-        //snprintf(bufferTxSer, sizeof(bufferTxSer)-1, "%.5f %.5f", measured_accel_abs, measured_gyro_abs );
-        //bluetooth.print(bufferTxSer);
-        //bluetooth.print('\n');
-        
+        float measured_accel_abs, measured_gyro_abs;
+        read_sensor_data( measured_accel_abs, measured_gyro_abs );
         
         // Update Kalman filter
         
@@ -183,3 +153,33 @@ void loop() {
         
     }
 }
+
+/*
+ * Read sensor data from MPU, or supply pre-recorded data
+ */
+void read_sensor_data( float &measured_accel_abs, float &measured_gyro_abs ) {
+  
+  #ifndef USE_MOCK_SENSOR_DATA
+  
+    // Use live sensor data
+    
+    sensors_event_t a, g, temp; // acceleration, gyro, temperature
+    mpu.getEvent(&a, &g, &temp);
+  
+    // acceleration magnitude 
+    measured_accel_abs = sqrt( a.acceleration.x * a.acceleration.x + a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z ); 
+    // gyro x/y magnitude (not including z = twist)
+    float measured_gyro_x = g.gyro.x - Gyro_offset_x;
+    float measured_gyro_y = g.gyro.y - Gyro_offset_y;
+    measured_gyro_abs  = sqrt( measured_gyro_x * measured_gyro_x + measured_gyro_y * measured_gyro_y );
+  
+  #else
+  
+    // Use pre-recorded mock data
+  
+    measured_accel_abs = mock_sensor_data[mock_sensor_data_row_i][0];
+    measured_gyro_abs  = mock_sensor_data[mock_sensor_data_row_i][1];
+    mock_sensor_data_row_i = ( mock_sensor_data_row_i + 1 ) % MOCK_SENSOR_DATA_NUM_ROWS;
+    
+  #endif
+  }
